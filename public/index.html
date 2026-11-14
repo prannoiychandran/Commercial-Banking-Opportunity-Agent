@@ -32,13 +32,24 @@ select{border:1px solid var(--line);background:white;border-radius:7px;color:inh
 .observability-header h2{font-size:clamp(23px,3vw,30px)}
 #observability > .panel + .panel{margin-top:16px}
 #trace-account{font-weight:700;margin-bottom:4px}
+.monitoring-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr));gap:10px;margin:12px 0 16px}
+.monitoring-metrics div{background:#f4f8f5;border-radius:8px;padding:10px 12px}
+.monitoring-metrics strong{display:block;font-size:20px}
+.monitoring-trend{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px;margin:8px 0 16px}
+.monitoring-trend h4{margin:0 0 4px;font-size:13px}.monitoring-trend .funnel-chart{margin:0}
+.monitoring-trend .funnel-chart li{grid-template-columns:4.5em minmax(0,1fr) 3em}
+.monitoring-trend li+li .bar-fill{background:#3d6c9d}
+.monitoring-review p+p{margin-top:6px}
+.review-findings{list-style:none;margin:12px 0 0;padding:0}
+.review-findings li{border-top:1px solid var(--line);padding:8px 0}
+.finding-heading{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.review-findings p{margin:4px 0 0;color:var(--muted)}
 .eval-panel{margin-top:16px}.eval-panel h4{margin:0 0 6px;font-size:14px}
 .eval-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
 .eval-grid>div{background:#f4f8f5;border-radius:8px;padding:12px;min-width:0}
 .eval-grid pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
 .eval-case{border-top:1px solid var(--line);padding:12px 0}.eval-case summary{cursor:pointer;font-weight:650}
 .eval-case .badge{margin-left:8px}.eval-case .eval-grid{margin-top:12px}
-.eval-rubric{margin-bottom:16px}.eval-rubric p{font-size:13px}
 .measure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
 .funnel-chart{list-style:none;padding:0;margin:0 0 16px;display:grid;gap:8px}
 .funnel-chart li{display:grid;grid-template-columns:95px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:12px}
@@ -126,13 +137,20 @@ select{border:1px solid var(--line);background:white;border-radius:7px;color:inh
       <dl id="safety" class="kpis"></dl>
     </section>
     <section class="panel eval-panel" aria-labelledby="eval-heading">
-      <div class="panel-title"><h3 id="eval-heading">Agent evaluation framework</h3><span class="badge">Rubric v1</span></div>
-      <p class="measure-note">Completed analyses are checked against their tool results and policy decision.</p>
-      <div class="eval-grid eval-rubric">
-        <div><h4>Run checks</h4><p>Check the recommendation status, fee estimate, and approval boundary against the evidence captured in the run.</p></div>
-        <div><h4>LLM judge rubric</h4><p>A future judge can score evidence grounding, policy alignment, and next-step clarity. Results below come from automated checks.</p></div>
+      <div class="panel-title"><h3 id="eval-heading">Automated checks</h3></div>
+      <div id="eval-cases"><p class="muted">Run an account analysis to see its check results here.</p></div>
+    </section>
+    <section class="panel" aria-labelledby="monitoring-heading">
+      <div class="panel-title"><h3 id="monitoring-heading">Recommendation Quality</h3></div>
+      <p id="monitoring-empty" class="muted">Run an account analysis to see its recommendation review.</p>
+      <div id="monitoring-results" hidden>
+        <div id="monitoring-metrics" class="monitoring-metrics" aria-live="polite"></div>
+        <h4>Pass rates after each run</h4>
+        <p class="measure-note">Cumulative results for the last four completed runs.</p>
+        <div id="monitoring-trend" class="monitoring-trend"></div>
+        <h4>Recommendation reviews</h4>
+        <div id="monitoring-reviews"></div>
       </div>
-      <div id="eval-cases"><p class="muted">Run an account analysis to see its evaluation here.</p></div>
     </section>
   </section>
 </main>
@@ -155,6 +173,54 @@ const badge = status => {
   const [label, tone] = statuses[status];
   return `<span class="badge ${tone}">${label}</span>`;
 };
+const monitoringRuns = new Map();
+
+function reviewRecommendation(run, eligibility, transactions, nextStep) {
+  const {status, evidence, reason} = run.proposal;
+  const paymentGrowth = transactions && evidence.includes(`${transactions.payment_growth_pct}% payment growth`);
+  const manualPayments = transactions && evidence.includes(`${transactions.manual_payments} manual payments/month`);
+  const grounded = Boolean(paymentGrowth && manualPayments);
+  const policyExplained = status === 'blocked' ? /onboarding incomplete/i.test(reason) :
+    status === 'needs_review' ? /missing information/i.test(reason) : /approval required/i.test(reason);
+  const specific = Boolean(nextStep) && (eligibility?.status !== 'ineligible' || /confirm which/i.test(nextStep));
+  return [
+    ['Evidence grounding', grounded, grounded
+      ? 'Payment growth and manual payment volume match the transaction summary.'
+      : 'The recommendation does not substantiate both payment figures with the transaction summary.'],
+    ['Policy communication', policyExplained, policyExplained
+      ? 'The recommendation explains the applicable approval or review requirement.'
+      : 'The recommendation does not clearly explain the applicable policy outcome.'],
+    ['Next-step clarity', specific, specific
+      ? 'The recommendation gives the RM a concrete action before proceeding.'
+      : 'Confirm which onboarding requirements are outstanding before reassessing eligibility.']
+  ];
+}
+
+function renderMonitoring() {
+  const runs = [...monitoringRuns.values()];
+  $('monitoring-empty').hidden = runs.length > 0;
+  $('monitoring-results').hidden = runs.length === 0;
+  const passRate = (count, total) => Math.round(count / total * 100);
+  const checksPassed = runs.filter(run => run.checksPassed).length;
+  const reviewsPassed = runs.filter(run => run.reviewPassed).length;
+  const metric = (label, count, suffix) => `<div><span>${label}</span>
+    <strong>${passRate(count, runs.length)}%</strong><small>${count} of ${runs.length} ${suffix}</small></div>`;
+  $('monitoring-metrics').innerHTML = runs.length ? [
+    metric('Workflow checks passed', checksPassed, 'passed'),
+    metric('Scripted review pass rate', reviewsPassed, 'passed all criteria'),
+    metric('Review coverage', runs.length, 'reviewed')
+  ].join('') : '';
+  let checks = 0;
+  let reviews = 0;
+  $('monitoring-trend').innerHTML = runs.map((run, index) => {
+    checks += Number(run.checksPassed);
+    reviews += Number(run.reviewPassed);
+    const bars = [['Checks', passRate(checks, index + 1)], ['Review', passRate(reviews, index + 1)]];
+    return `<section><h4>${escapeHtml(run.label)}</h4>
+      <ul class="funnel-chart">${renderBars(bars, value => `${value}%`, 100)}</ul></section>`;
+  }).slice(-4).join('');
+}
+
 function evaluateAnalysis(run, account) {
   const toolOutput = name => {
     const output = run.trace.find(event => event.name === name)?.toolExchange?.response?.output;
@@ -174,12 +240,33 @@ function evaluateAnalysis(run, account) {
     ['Analysis leaves CRM creation to the approval step', !crmWrite]
   ];
   const passed = checks.every(([, pass]) => pass);
+  const nextStep = nextSteps[status];
+  const findings = reviewRecommendation(run, eligibility, toolOutput('get_transaction_summary'), nextStep);
+  const reviewPassed = findings.every(([, pass]) => pass);
+  const label = monitoringRuns.get(run.id)?.label || `Analysis ${monitoringRuns.size + 1}`;
+  if (!monitoringRuns.has(run.id)) {
+    monitoringRuns.set(run.id, {label, checksPassed: passed, reviewPassed});
+    $('monitoring-reviews').insertAdjacentHTML('afterbegin', `
+      <details class="eval-case monitoring-review">
+        <summary>${escapeHtml(account?.name || run.accountId)} · ${escapeHtml(label)}
+          <span class="badge ${reviewPassed ? 'good' : 'warn'}">${reviewPassed ? 'Pass' : 'Needs review'}</span></summary>
+        <p><strong>Recommendation</strong> ${escapeHtml(reason)} ${escapeHtml(nextStep || '')}</p>
+        <p><strong>Workflow checks</strong> ${passed ? 'Passed' : 'Failed'}</p>
+        <ul class="review-findings">${findings.map(([criterion, pass, finding]) => `
+          <li>
+            <div class="finding-heading"><strong>${escapeHtml(criterion)}</strong>
+              <span class="badge ${pass ? 'good' : 'warn'}">${pass ? 'Pass' : 'Needs review'}</span></div>
+            <p>${escapeHtml(finding)}</p>
+          </li>`).join('')}</ul>
+      </details>`);
+    renderMonitoring();
+  }
   const json = value => escapeHtml(JSON.stringify(value, null, 2));
   const cases = $('eval-cases');
   cases.querySelector(':scope > p')?.remove();
   cases.insertAdjacentHTML('afterbegin', `
     <details class="eval-case">
-      <summary>${escapeHtml(account?.name || run.accountId)} · ${escapeHtml(run.id)}
+      <summary>${escapeHtml(account?.name || run.accountId)} · ${escapeHtml(label)}
         <span class="badge ${passed ? 'good' : 'stop'}">${passed ? 'Pass' : 'Fail'}</span></summary>
       <div class="eval-grid">
         <div><h4>Run evidence</h4><pre>${json({account_id: run.accountId, consent: profile?.consent, data_complete: profile?.data_complete, eligibility, estimate})}</pre></div>
@@ -282,8 +369,7 @@ function portfolioFunnel() {
 }
 let sessionFunnel;
 
-function renderBars(rows, format = String) {
-  const max = Math.max(1, ...rows.map(([, value]) => value));
+function renderBars(rows, format = String, max = Math.max(1, ...rows.map(([, value]) => value))) {
   return rows.map(([label, value]) => `<li><span>${escapeHtml(label)}</span>
     <span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${value / max * 100}%"></span></span>
     <strong>${escapeHtml(format(value))}</strong></li>`).join('');
@@ -645,7 +731,10 @@ $('reset').addEventListener('click', async () => {
   try {
     await api('reset', {});
     states.clear();
-    $('eval-cases').innerHTML = '<p class="muted">Run an account analysis to see its evaluation here.</p>';
+    monitoringRuns.clear();
+    $('monitoring-reviews').replaceChildren();
+    renderMonitoring();
+    $('eval-cases').innerHTML = '<p class="muted">Run an account analysis to see its check results here.</p>';
     renderPortfolio();
     renderAccount();
     await Promise.all([loadPipeline(), loadMeasurement()]);
