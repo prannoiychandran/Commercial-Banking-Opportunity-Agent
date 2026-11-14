@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empire State Bank | Revenue Workspace</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color:#182d2a;background:#f3f6f4;line-height:1.5;--ink:#173b33;--muted:#536863;--line:#dce5df;--green:#17634e}
+*{box-sizing:border-box}body{margin:0}button,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.58;cursor:default}button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #3c9a7f;outline-offset:3px}
+header{background:#153b32;color:white}.header-inner,main{max-width:1260px;margin:auto;padding:0 28px}.header-inner{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:750;font-size:19px}.brand small{font-size:13px;color:#c4d9cf;font-weight:500;margin-left:12px}
+main{padding-block:35px 52px}h1,h2,h3,p{margin:0}h1{font-size:clamp(27px,4vw,39px);letter-spacing:-.045em;line-height:1.15}h2{font-size:18px;letter-spacing:-.02em}h3{font-size:14px}.muted,small{color:var(--muted)}.intro{display:flex;justify-content:space-between;align-items:center;gap:16px}.intro p{margin-top:8px}
+.metrics,.layout{display:grid;gap:16px;margin:22px 0}.metrics{grid-template-columns:repeat(3,1fr)}.layout{grid-template-columns:minmax(210px,.8fr) minmax(0,1.2fr);align-items:start}.panel,.metric{background:white;border:1px solid var(--line);border-radius:14px;padding:20px}.metric b{display:block;font-size:27px;letter-spacing:-.04em;margin-top:4px}.panel>p,.panel-title{margin-bottom:14px}.panel-title{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.account{display:block;width:100%;text-align:left;background:#fff;color:inherit;border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}.account[aria-pressed=true]{background:#ebf6f0;border-color:#549783}.account strong,.account small{display:block}.account strong{line-height:1.25}.account small{margin:4px 0 8px}.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:#eaf0f4;color:#35516b}.badge.good{background:#e2f3e9;color:#125c43}.badge.warn{background:#fff0d7;color:#814c00}.badge.stop{background:#fbe8e4;color:#932f24}
+.primary,.secondary{border:1px solid transparent;border-radius:8px;padding:8px 13px;font-weight:650}.primary{background:var(--green);color:white}.secondary{background:white;color:var(--ink);border-color:var(--line)}#analyze{width:100%;margin-top:5px}.status{min-height:24px;margin:12px 0 0;font-size:13px;color:var(--muted)}.error{color:#932f24}.proposal{background:#f4f8f5;padding:14px;border-radius:10px;margin-bottom:16px}.proposal h3{font-size:19px;margin-top:7px}.proposal p{margin-top:5px}.evidence{padding-left:20px;margin:6px 0 16px;font-size:14px}
+select{border:1px solid var(--line);background:white;border-radius:7px;color:inherit;padding:4px 6px;font-size:13px}.trace{max-height:460px;overflow:auto;padding-right:4px}.event{border-left:2px solid #c4dacf;padding:2px 0 13px 11px;margin-left:4px;font-size:13px}.event summary{cursor:pointer}.event small{display:block;margin-top:3px}.event pre{overflow-wrap:anywhere;white-space:pre-wrap;background:#f3f6f4;border-radius:7px;padding:9px;font-size:11px}.trace-note{font-size:12px;color:var(--muted)}
+.crm-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.crm-stat{background:#edf5ef;border-radius:10px;padding:10px 14px;flex:1 1 150px}
+.crm-stat span,.crm-record small{display:block;font-size:12px;color:var(--muted)}
+.crm-stat strong{font-size:23px;color:var(--ink)}
+.crm-records{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px}
+.crm-record{border:1px solid var(--line);border-radius:10px;padding:13px;display:grid;grid-template-columns:1fr auto;gap:6px 12px}
+.crm-record h4{margin:0;font-size:15px}.crm-record p{font-size:13px;color:var(--muted)}.crm-fee{text-align:right}
+.crm-empty{padding:16px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:14px}
+.panel h3[id]{font-size:18px;letter-spacing:-.02em}
+.decision-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.decision-form{margin-top:12px}.decision-form label{display:block;font-weight:650;font-size:14px}
+.decision-form textarea{display:block;width:100%;margin:6px 0 8px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;resize:vertical}
+.next-step{margin:0 0 12px}.next-step p{margin-top:4px}
+.workspace-nav{margin-top:12px}.workspace-nav a,.observability-header a{color:var(--green);font-size:14px;font-weight:650;text-underline-offset:3px}
+.observability{margin-top:34px;padding-top:25px;border-top:2px solid var(--line)}
+.observability-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px}
+.observability-header h2{font-size:clamp(23px,3vw,30px)}
+#observability > .panel + .panel{margin-top:16px}
+#trace-account{font-weight:700;margin-bottom:4px}
+.eval-panel{margin-top:16px}.eval-panel h4{margin:0 0 6px;font-size:14px}
+.eval-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.eval-grid>div{background:#f4f8f5;border-radius:8px;padding:12px;min-width:0}
+.eval-grid pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.eval-case{border-top:1px solid var(--line);padding:12px 0}.eval-case summary{cursor:pointer;font-weight:650}
+.eval-case .badge{margin-left:8px}.eval-case .eval-grid{margin-top:12px}
+.eval-rubric{margin-bottom:16px}.eval-rubric p{font-size:13px}
+.measure-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.funnel-chart{list-style:none;padding:0;margin:0 0 16px;display:grid;gap:8px}
+.funnel-chart li{display:grid;grid-template-columns:95px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:12px}
+.funnel-chart strong{text-align:right}.bar-track{height:11px;background:#e7efe9;border-radius:5px;overflow:hidden}
+.bar-fill{display:block;height:100%;background:#287d61;border-radius:5px}
+.fee-chart{margin:0 0 14px;padding:12px;background:#f4f8f5;border-radius:8px}
+.fee-chart h4{font-size:13px;margin:0 0 8px}.fee-chart .funnel-chart{margin:0}
+.fee-chart li{grid-template-columns:68px minmax(0,1fr) 60px}
+.kpis{margin:0}.kpis div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.kpis dd{margin:0;text-align:right;font-weight:650}
+.measure-note{font-size:12px;color:var(--muted);margin-top:9px}.event-error{border-color:#b95244}
+@media(max-width:760px){.measure-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.header-inner,main{padding-inline:16px}.brand small{display:none}.layout{grid-template-columns:1fr}.metrics{gap:7px}.metric{padding:10px}.metric b{font-size:20px}.metric span{font-size:12px}.intro{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><div class="header-inner"><div class="brand">Empire State Bank <small>Commercial Banking</small></div></div></header>
+<main>
+  <section id="relationship-manager" aria-labelledby="relationship-heading">
+    <div class="intro">
+      <div><h1 id="relationship-heading">Relationship Manager Dashboard</h1><p class="muted">Review account opportunities and approve CRM records.</p></div>
+      <button id="reset" class="secondary">Reset workspace</button>
+    </div>
+    <nav class="workspace-nav" aria-label="Workspace"><a href="#observability">Jump to Observability</a></nav>
+    <div class="metrics">
+      <div class="metric"><span class="muted">Portfolio accounts</span><b id="account-count">—</b></div>
+      <div class="metric"><span class="muted">CRM opportunities</span><b id="count">—</b></div>
+      <div class="metric"><span class="muted">Annual fees</span><b id="pipeline">—</b></div>
+    </div>
+    <div class="layout">
+      <section class="panel" aria-labelledby="portfolio-heading">
+        <h3 id="portfolio-heading">Account portfolio</h3><div id="accounts"></div>
+        <button id="analyze" class="primary" disabled>Analyze account</button>
+        <div id="message" class="status" role="status"></div>
+      </section>
+      <section class="panel" aria-labelledby="recommendation-heading">
+        <div class="panel-title"><h3 id="recommendation-heading">Recommendation</h3></div>
+        <div id="recommendation" class="muted">Select an account and run an analysis.</div>
+        <button id="approve" class="primary" hidden>Approve and create CRM record</button>
+        <div class="decision-actions">
+          <button id="follow-up" class="primary" hidden>Record follow-up</button>
+          <button id="refine" class="secondary" hidden>Request refinement</button>
+          <button id="decline" class="secondary" hidden>Decline suggestion</button>
+        </div>
+        <form id="decision-form" class="decision-form" hidden>
+          <label for="decision-note" id="decision-label"></label>
+          <textarea id="decision-note" maxlength="500" rows="3"></textarea>
+          <button id="decision-submit" class="primary" type="submit">Save decision</button>
+          <button id="decision-cancel" class="secondary" type="button">Cancel</button>
+        </form>
+      </section>
+    </div>
+    <section class="panel" aria-labelledby="crm-heading">
+      <div class="panel-title"><h3 id="crm-heading">CRM pipeline</h3></div>
+      <div id="opportunities"><p class="crm-empty">No CRM opportunities yet. Approve a recommendation to add one.</p></div>
+    </section>
+    <div class="measure-grid">
+      <section class="panel" aria-labelledby="funnel-heading">
+        <div class="panel-title"><h3 id="funnel-heading">Revenue funnel</h3>
+          <select id="funnel-view" aria-label="Revenue funnel data"><option value="portfolio">Portfolio</option><option value="session">Current session</option></select></div>
+        <p id="cohort" class="measure-note"></p><ol id="funnel" class="funnel-chart" aria-label="Opportunity counts by stage"></ol>
+        <div id="fee-chart" class="fee-chart"></div><dl id="operational" class="kpis"></dl>
+      </section>
+      <section class="panel" aria-labelledby="scenario-heading">
+        <div class="panel-title"><h3 id="scenario-heading">Business case</h3><span class="badge">Scenario assumptions</span></div>
+        <dl id="scenario" class="kpis"></dl><p id="scenario-note" class="measure-note"></p>
+      </section>
+    </div>
+  </section>
+
+  <section id="observability" class="observability" aria-labelledby="observability-heading">
+    <div class="observability-header">
+      <h2 id="observability-heading">Observability</h2>
+      <a href="#relationship-manager">Back to dashboard</a>
+    </div>
+    <section class="panel" aria-labelledby="trace-heading">
+      <div class="panel-title"><h3 id="trace-heading">Execution trace</h3><select id="filter" aria-label="Filter trace events"><option value="">All events</option><option value="openai">OpenAI Responses API</option><option value="internal">Internal systems</option><option value="salesforce">Salesforce CRM</option></select></div>
+      <p id="trace-account" class="trace-note"></p>
+      <p class="trace-note">OpenAI turns request functions. Internal systems execute those functions and enforce policy. Salesforce CRM is the destination for approved opportunities. Timings show local execution time. Run logs appear alongside the execution steps.</p>
+      <p id="trace-summary" class="trace-note" role="status"></p>
+      <div id="trace" class="trace"></div>
+      <p id="trace-log-status" class="trace-note" role="status"></p>
+    </section>
+    <section class="panel" aria-labelledby="safety-heading">
+      <div class="panel-title"><h3 id="safety-heading">Guardrails and evaluation</h3></div>
+      <dl id="safety" class="kpis"></dl>
+    </section>
+    <section class="panel eval-panel" aria-labelledby="eval-heading">
+      <div class="panel-title"><h3 id="eval-heading">Agent evaluation framework</h3><span class="badge">Rubric v1</span></div>
+      <p class="measure-note">Completed analyses are checked against their tool results and policy decision.</p>
+      <div class="eval-grid eval-rubric">
+        <div><h4>Run checks</h4><p>Check the recommendation status, fee estimate, and approval boundary against the evidence captured in the run.</p></div>
+        <div><h4>LLM judge rubric</h4><p>A future judge can score evidence grounding, policy alignment, and next-step clarity. Results below come from automated checks.</p></div>
+      </div>
+      <div id="eval-cases"><p class="muted">Run an account analysis to see its evaluation here.</p></div>
+    </section>
+  </section>
+</main>
+<script type="module">
+const $ = id => document.getElementById(id);
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+})[char]);
+const money = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0});
+const products = {
+  treasury_management: 'Treasury Management', fx_treasury: 'FX Treasury', corporate_card: 'Corporate Card'
+};
+const statuses = {
+  eligible: ['Eligible', 'good'], ineligible: ['Restricted', 'stop'], review: ['Data review', 'warn'],
+  awaiting_approval: ['Awaiting approval', 'good'], blocked: ['Blocked', 'stop'],
+  needs_review: ['Needs review', 'warn'], refinement_requested: ['Refinement requested', 'warn'],
+  declined: ['Declined', 'stop'], approved: ['CRM record created', 'good']
+};
+const badge = status => {
+  const [label, tone] = statuses[status];
+  return `<span class="badge ${tone}">${label}</span>`;
+};
+function evaluateAnalysis(run, account) {
+  const toolOutput = name => {
+    const output = run.trace.find(event => event.name === name)?.toolExchange?.response?.output;
+    return output ? JSON.parse(output) : null;
+  };
+  const profile = toolOutput('get_customer_profile');
+  const eligibility = toolOutput('check_product_eligibility');
+  const estimate = toolOutput('estimate_revenue_opportunity');
+  const expectedStatus = eligibility?.status === 'ineligible' ? 'blocked' :
+    eligibility?.status === 'eligible' && profile?.consent && profile?.data_complete ? 'awaiting_approval' : 'needs_review';
+  const expectedFee = expectedStatus === 'awaiting_approval' ? estimate?.annual_fee_revenue : null;
+  const {status, annualRevenue, reason} = run.proposal;
+  const crmWrite = run.trace.some(event => event.system === 'salesforce');
+  const checks = [
+    ['Eligibility and recommendation status agree', Boolean(profile && eligibility) && status === expectedStatus],
+    ['Annual fees agree with the permitted estimate', annualRevenue === expectedFee],
+    ['Analysis leaves CRM creation to the approval step', !crmWrite]
+  ];
+  const passed = checks.every(([, pass]) => pass);
+  const json = value => escapeHtml(JSON.stringify(value, null, 2));
+  const cases = $('eval-cases');
+  cases.querySelector(':scope > p')?.remove();
+  cases.insertAdjacentHTML('afterbegin', `
+    <details class="eval-case">
+      <summary>${escapeHtml(account?.name || run.accountId)} · ${escapeHtml(run.id)}
+        <span class="badge ${passed ? 'good' : 'stop'}">${passed ? 'Pass' : 'Fail'}</span></summary>
+      <div class="eval-grid">
+        <div><h4>Run evidence</h4><pre>${json({account_id: run.accountId, consent: profile?.consent, data_complete: profile?.data_complete, eligibility, estimate})}</pre></div>
+        <div><h4>Expected output</h4><pre>${json({status: expectedStatus, annual_fee_estimate: expectedFee ?? null, crm_write: false})}</pre></div>
+        <div><h4>Actual output</h4><pre>${json({status, annual_fee_estimate: annualRevenue, crm_write: crmWrite, reason})}</pre></div>
+        <div><h4>Check results</h4><ul>${checks.map(([label, pass]) =>
+          `<li>${pass ? 'Pass' : 'Fail'} · ${escapeHtml(label)}</li>`).join('')}</ul></div>
+      </div>
+    </details>`);
+}
+
+const traceKinds = {model: 'Model turn', tool: 'Function execution', policy: 'Policy check', action: 'Action'};
+const traceSystems = {
+  openai: ['OpenAI Responses API', ''],
+  internal: ['Internal systems', 'good'],
+  salesforce: ['Salesforce CRM', 'warn']
+};
+const states = new Map();
+let accounts = [];
+let selected;
+let resetting = false;
+let measurementRequest = 0;
+let runLogs = [];
+const stateFor = id => states.get(id);
+const busy = state => state?.running || state?.approving;
+const post = body => ({method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify(body)});
+
+async function api(path, body) {
+  const response = await fetch('/api/' + path, body === undefined ? undefined : post(body));
+  const result = await response.json();
+  if (!response.ok || result.error) throw new Error(result.error || 'Request failed');
+  return result;
+}
+
+function renderPortfolio() {
+  $('accounts').innerHTML = accounts.map(account => `
+    <button class="account" data-account="${escapeHtml(account.id)}" aria-pressed="${account.id === selected}">
+      <strong>${escapeHtml(account.name)}</strong>
+      <small>${escapeHtml(account.industry)} · +${escapeHtml(account.paymentGrowth)}% payment growth</small>
+      ${badge(stateFor(account.id)?.run?.proposal.status || account.eligibility)}
+    </button>`).join('');
+}
+
+async function loadPipeline() {
+  const records = await api('opportunities');
+  portfolioRecords = records;
+  renderFunnel();
+  $('count').textContent = records.length;
+  const annualFees = records.reduce((sum, record) => sum + record.annualRevenue, 0);
+  $('pipeline').textContent = money.format(annualFees);
+  $('opportunities').innerHTML = records.length ? `
+    <div class="crm-summary">
+      <div class="crm-stat"><span>CRM opportunities</span><strong>${records.length}</strong></div>
+      <div class="crm-stat"><span>Annual fees</span><strong>${money.format(annualFees)}</strong></div>
+    </div>
+    <ul class="crm-records" aria-label="CRM opportunities">
+      ${records.map(record => {
+        const account = accounts.find(account => account.id === record.accountId);
+        return `<li class="crm-record">
+          <div><h4>${escapeHtml(account?.name || record.accountId)}</h4>
+            <p>${escapeHtml(products[account?.product] || '—')}</p></div>
+          <div class="crm-fee"><strong>${money.format(record.annualRevenue)}</strong><small>Annual fees</small></div>
+          <small>${escapeHtml(record.id)}</small>
+        </li>`;
+      }).join('')}
+    </ul>` : '<p class="crm-empty">No CRM opportunities yet. Approve a recommendation to add one.</p>';
+}
+
+const rate = value => value === null ? 'Unavailable' : `${Math.round(value * 100)}%`;
+const dateTime = value => new Date(value).toLocaleString();
+
+function renderKpis(id, rows) {
+  $(id).innerHTML = rows.map(([label, value]) =>
+    `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
+}
+
+const portfolioBaseline = {analyzed: 120, eligible: 78, presented: 64, approved: 32, created: 24};
+const portfolioProducts = {
+  treasury_management: ['Treasury', 144000],
+  fx_treasury: ['FX', 126000],
+  corporate_card: ['Cards', 33000]
+};
+let portfolioRecords = [];
+
+function portfolioFunnel() {
+  const stages = Object.fromEntries(Object.entries(portfolioBaseline)
+    .map(([stage, count]) => [stage, count + portfolioRecords.length]));
+  const fees = new Map(Object.values(portfolioProducts));
+  for (const record of portfolioRecords) {
+    const account = accounts.find(account => account.id === record.accountId);
+    const label = portfolioProducts[account?.product]?.[0] || 'Other';
+    fees.set(label, (fees.get(label) || 0) + record.annualRevenue);
+  }
+  return {
+    ...stages, fees: [...fees],
+    annualPipeline: [...fees.values()].reduce((sum, amount) => sum + amount, 0),
+    rmAcceptanceRate: stages.approved / stages.presented,
+    qualificationRate: stages.approved / stages.eligible
+  };
+}
+let sessionFunnel;
+
+function renderBars(rows, format = String) {
+  const max = Math.max(1, ...rows.map(([, value]) => value));
+  return rows.map(([label, value]) => `<li><span>${escapeHtml(label)}</span>
+    <span class="bar-track" aria-hidden="true"><span class="bar-fill" style="width:${value / max * 100}%"></span></span>
+    <strong>${escapeHtml(format(value))}</strong></li>`).join('');
+}
+
+function renderFunnel() {
+  const portfolio = $('funnel-view').value === 'portfolio';
+  const funnel = portfolio ? portfolioFunnel() : sessionFunnel;
+  $('cohort').textContent = portfolio ? 'Illustrative 90-day baseline plus CRM records from this session' :
+    funnel ? `${dateTime(funnel.windowStart)} to ${dateTime(funnel.windowEnd)} · ${funnel.uniqueAccounts} unique accounts. Stages count runs.` :
+    'Loading current session…';
+  $('funnel').innerHTML = funnel ? renderBars([
+    ['Analyzed', funnel.analyzed], ['Eligible', funnel.eligible], ['Presented', funnel.presented],
+    ['RM approved', funnel.approved], ['CRM created', funnel.created]
+  ]) : '';
+  $('fee-chart').hidden = !portfolio;
+  $('fee-chart').innerHTML = portfolio ? `<h4>Annual fee pipeline by product</h4>
+    <ul class="funnel-chart">${renderBars(funnel.fees, value => money.format(value))}</ul>` : '';
+  renderKpis('operational', funnel ? [
+    ['RM acceptance · approved / presented', rate(funnel.rmAcceptanceRate)],
+    ['Qualification · approved / eligible', rate(funnel.qualificationRate)],
+    ['Annual fee pipeline', money.format(funnel.annualPipeline)]
+  ] : []);
+}
+
+$('funnel-view').addEventListener('change', renderFunnel);
+renderFunnel();
+
+async function loadMeasurement() {
+  const request = ++measurementRequest;
+  try {
+    const [{funnel, evaluation, scenario}, events] = await Promise.all([api('metrics'), api('events')]);
+    if (request !== measurementRequest) return;
+    sessionFunnel = funnel;
+    renderFunnel();
+    renderKpis('safety', [
+      ['Runs held by policy', evaluation.policyBlockedRuns],
+      ['Rejected approvals', evaluation.rejectedApprovals],
+      ['Duplicate approval attempts', evaluation.duplicateApprovalAttempts],
+      ['Unauthorized CRM writes', evaluation.unauthorizedWrites],
+      ['Duplicate CRM writes', evaluation.duplicateWrites],
+      ['Failed analyses', funnel.failed]
+    ]);
+    renderKpis('scenario', [
+      ['Commercial accounts', scenario.accounts.toLocaleString()],
+      ['Incremental coverage', rate(scenario.coverage)],
+      ['Qualification / conversion', `${rate(scenario.qualification)} / ${rate(scenario.conversion)}`],
+      ['Analyzed → qualified → won', `${scenario.analyzed} → ${scenario.qualified} → ${scenario.wins}`],
+      ['Annual fee per win', money.format(scenario.fee)],
+      ['Contribution margin', rate(scenario.margin)],
+      ['Annual operating cost', money.format(scenario.operatingCost)],
+      ['Modeled annualized fees', money.format(scenario.annualizedFees)],
+      ['Modeled net annual contribution', money.format(scenario.netAnnualContribution)]
+    ]);
+    $('scenario-note').textContent = 'Projections are based on the assumptions above.';
+    $('trace-log-status').textContent = '';
+    runLogs = events;
+    renderTrace(true);
+  } catch {
+    if (request === measurementRequest) $('trace-log-status').textContent = 'Could not load run logs.';
+  }
+}
+
+const nextSteps = {
+  awaiting_approval: 'Review the evidence and approve the opportunity to add it to the CRM pipeline.',
+  blocked: 'Follow up on product onboarding requirements, then reanalyze when eligibility can be checked again.',
+  needs_review: 'Confirm the missing account information, then reanalyze once the source data is complete.',
+  approved: 'Review the opportunity in the CRM pipeline and plan a conversation with the client.',
+  refinement_requested: 'Review the recorded feedback before starting another analysis.',
+  declined: 'The suggestion is closed. Reanalyze if the client’s needs or circumstances change.'
+};
+
+function renderControls() {
+  const state = stateFor(selected);
+  $('analyze').disabled = !selected || resetting || Boolean(busy(state));
+  $('reset').disabled = resetting || [...states.values()].some(busy);
+  $('approve').disabled = resetting || Boolean(busy(state));
+  $('approve').hidden = state?.run?.proposal.status !== 'awaiting_approval';
+  const proposal = state?.run?.proposal;
+  const open = ['awaiting_approval', 'blocked', 'needs_review'].includes(proposal?.status);
+  const followUp = open && proposal.status !== 'awaiting_approval' && !proposal.followUpRecorded;
+  const disabled = resetting || Boolean(busy(state));
+  $('follow-up').hidden = !followUp;
+  $('refine').hidden = $('decline').hidden = !open;
+  for (const id of ['follow-up', 'refine', 'decline', 'decision-submit', 'decision-cancel', 'decision-note']) {
+    $(id).disabled = disabled;
+  }
+  $('decision-form').hidden = !open || !state?.draft;
+  if (open && state.draft) {
+    const refining = state.draft.action === 'refine';
+    $('decision-label').textContent = refining ? 'What should be refined?' : 'Reason for declining (optional)';
+    $('decision-note').required = refining;
+    $('decision-note').value = state.draft.note;
+    $('decision-submit').textContent = refining ? 'Save refinement request' : 'Confirm decline';
+  }
+
+  $('message').textContent = state?.error || state?.message || '';
+  $('message').classList.toggle('error', Boolean(state?.error));
+}
+
+function renderRecommendation() {
+  const state = stateFor(selected);
+  const proposal = state?.run?.proposal;
+  if (!proposal) {
+    $('recommendation').textContent = state?.running ? 'Analyzing account activity and product eligibility…' :
+      state?.error ? 'Analysis did not complete.' : 'Run an analysis to see a recommendation.';
+    return;
+  }
+  const fee = proposal.annualRevenue;
+  $('recommendation').innerHTML = `
+    <div class="proposal">${badge(proposal.status)}
+      <h3>${escapeHtml(products[proposal.product] || proposal.product)}</h3>
+      <p>${escapeHtml(proposal.status === 'approved' ? 'The approved opportunity is in the CRM pipeline.' : proposal.reason)}</p>
+      ${fee === null ? '' : `<p><strong>${money.format(fee)}</strong> annual fees</p>`}
+    </div>
+    <h3>Supporting evidence</h3>
+    <ul class="evidence">${proposal.evidence.map(item => `<li>${escapeHtml(item.replaceAll('_', ' '))}</li>`).join('')}</ul>
+    <div class="next-step"><h3>Next step</h3><p>${escapeHtml(nextSteps[proposal.status])}</p>
+      ${proposal.followUpRecorded ? '<p><strong>Follow-up recorded.</strong></p>' : ''}
+      ${proposal.decisionNote ? `<p><strong>RM note</strong> ${escapeHtml(proposal.decisionNote)}</p>` : ''}
+    </div>`;
+}
+
+function updateTraceSummary() {
+  const account = accounts.find(account => account.id === selected);
+  $('trace-account').textContent = account ? account.name : '';
+  const state = stateFor(selected);
+  const events = state?.events || [];
+  const filter = $('filter').value;
+  const shown = events.filter(event => !filter || event.system === filter).length;
+  $('trace-summary').textContent = state?.running ? 'Analysis running…' :
+    events.length ? `${shown} of ${events.length} events · ${events.filter(event => event.kind === 'tool').length} tool calls` :
+    'No execution events yet.';
+}
+
+function appendTrace(event, log) {
+  const filter = $('filter').value;
+  if (filter && event.system !== filter) return;
+  const trace = $('trace');
+  const follow = trace.scrollHeight - trace.scrollTop - trace.clientHeight < 24;
+  const exchange = event.toolExchange;
+  const body = item => escapeHtml(JSON.stringify(item, null, 2));
+  const responses = event.responsesExchange;
+  let detail = `<pre>${escapeHtml(event.detail)}</pre>`;
+  if (responses) {
+    detail = `<small>POST /v1/responses · Request body</small><pre>${body(responses.request)}</pre>
+      <small>${responses.response ? 'Response body' : 'Adapter error'}</small>
+      <pre>${responses.response ? body(responses.response) : escapeHtml(event.detail)}</pre>`;
+  }
+  if (exchange) {
+    detail = `<small>OpenAI function request → Internal system</small><pre>${body(exchange.request)}</pre>
+       <small>${exchange.response ? 'Internal result → OpenAI function output' : 'Internal tool error'}</small>
+       <pre>${exchange.response ? body(exchange.response) : escapeHtml(event.detail)}</pre>`;
+  }
+  const [systemLabel, systemTone] = traceSystems[event.system];
+  const title = event.name.replaceAll('_', ' ');
+  const outcome = {blocked: 'Stopped', ok: 'Completed', error: 'Failed', pending: 'Pending'}[event.status];
+  const timing = event.durationMs < 0.1 ? '<0.1 ms' : `${event.durationMs.toFixed(1)} ms`;
+  trace.insertAdjacentHTML('beforeend', `
+    <details data-step="${event.step}" class="event${event.status === 'error' ? ' event-error' : ''}">
+      <summary><strong>${escapeHtml(event.step)}. ${escapeHtml(title)}</strong> <span class="badge ${systemTone}">${systemLabel}</span>
+        <small>${traceKinds[event.kind]} · ${outcome} · ${escapeHtml(timing)}</small></summary>
+      ${detail}
+      ${log ? logDetails(log) : ''}
+    </details>`);
+  if (follow && stateFor(selected)?.running) trace.scrollTop = trace.scrollHeight;
+}
+
+function logDetails(log) {
+  const {event_id, event_type, occurred_at, run_id, account_id, actor_type, payload} = log;
+  return `<small>Run log</small><pre>${escapeHtml(JSON.stringify({
+    event_id, event_type, occurred_at, run_id, account_id, actor_type, payload
+  }, null, 2))}</pre>`;
+}
+
+function renderTrace(preserveView = false) {
+  const trace = $('trace');
+  const openSteps = preserveView === true ? [...trace.querySelectorAll('details[open][data-step]')].map(row => row.dataset.step) : [];
+  const scrollTop = preserveView === true ? trace.scrollTop : 0;
+  trace.replaceChildren();
+  const state = stateFor(selected);
+  const events = state?.events || [];
+  const logs = state?.run ? runLogs.filter(log => log.run_id === state.run.id) : [];
+  const byId = new Map(logs.map(log => [log.event_id, log]));
+  const linked = new Set(events.map(event => event.eventId));
+  for (const event of events) appendTrace(event, byId.get(event.eventId));
+  const standaloneLogs = logs.filter(log => !linked.has(log.event_id));
+  if (['', 'internal'].includes($('filter').value)) {
+    for (const log of standaloneLogs) {
+      trace.insertAdjacentHTML('beforeend', `<details class="event">
+        <summary><strong>${escapeHtml(log.event_type.replaceAll('_', ' '))}</strong>
+          <span class="badge good">Internal systems</span><small>Run log</small></summary>
+        ${logDetails(log)}
+      </details>`);
+    }
+  }
+  for (const row of trace.querySelectorAll('details[data-step]')) {
+    row.open = openSteps.includes(row.dataset.step);
+  }
+  trace.scrollTop = scrollTop;
+  updateTraceSummary();
+}
+
+function renderAccount() {
+  for (const button of $('accounts').querySelectorAll('button')) {
+    button.setAttribute('aria-pressed', String(button.dataset.account === selected));
+  }
+  renderControls();
+  renderRecommendation();
+  renderTrace();
+}
+
+async function streamAnalysis(id, state) {
+  const response = await fetch('/api/analyze/stream', post({accountId: id}));
+  if (!response.ok || !response.body) throw new Error('Could not open the analysis stream.');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      let newline;
+      while ((newline = buffer.indexOf('\n')) !== -1) {
+        const message = JSON.parse(buffer.slice(0, newline));
+        buffer = buffer.slice(newline + 1);
+        if (message.type === 'error') throw new Error(message.error);
+        if (message.type === 'trace') {
+          state.events.push(message.event);
+          if (selected === id) appendTrace(message.event);
+        }
+        if (message.type === 'complete') state.run = message.run;
+      }
+    }
+    if (!state.run) throw new Error('The analysis stream ended before a recommendation arrived.');
+  } finally {
+    await reader.cancel();
+  }
+}
+
+$('accounts').addEventListener('click', event => {
+  const button = event.target.closest('button[data-account]');
+  if (!button || resetting) return;
+  selected = button.dataset.account;
+  renderAccount();
+});
+
+$('filter').addEventListener('change', renderTrace);
+
+$('analyze').addEventListener('click', async () => {
+  const id = selected;
+  if (!id || resetting || busy(stateFor(id))) return;
+  const state = {running: true, events: [], message: 'Analyzing account…'};
+  states.set(id, state);
+  renderAccount();
+  try {
+    await streamAnalysis(id, state);
+    evaluateAnalysis(state.run, accounts.find(account => account.id === id));
+    state.message = 'Analysis complete.';
+  } catch (error) {
+    state.error = error.message;
+  } finally {
+    state.running = false;
+    void loadMeasurement();
+    renderPortfolio();
+    renderControls();
+    if (selected === id) {
+      renderRecommendation();
+      updateTraceSummary();
+    }
+  }
+});
+
+function openDecision(action) {
+  const state = stateFor(selected);
+  state.draft = {action, note: ''};
+  renderControls();
+  $('decision-note').focus();
+}
+
+async function submitDecision(action, note) {
+  const id = selected;
+  const state = stateFor(id);
+  if (!state?.run || resetting || busy(state)) return;
+  state.approving = true;
+  state.error = '';
+  renderControls();
+  try {
+    state.run = await api('recommendation/decision', {runId: state.run.id, action, note});
+    state.events = state.run.trace;
+    state.draft = null;
+    state.message = {
+      follow_up: 'Follow-up recorded.', refine: 'Refinement request recorded.', decline: 'Suggestion declined.'
+    }[action];
+  } catch (error) {
+    state.error = error.message;
+  } finally {
+    state.approving = false;
+    renderPortfolio();
+    renderControls();
+    if (selected === id) {
+      renderRecommendation();
+      renderTrace();
+    }
+    void loadMeasurement();
+  }
+}
+
+$('follow-up').addEventListener('click', () => void submitDecision('follow_up', ''));
+$('refine').addEventListener('click', () => openDecision('refine'));
+$('decline').addEventListener('click', () => openDecision('decline'));
+$('decision-note').addEventListener('input', event => {
+  stateFor(selected).draft.note = event.target.value;
+});
+$('decision-cancel').addEventListener('click', () => {
+  stateFor(selected).draft = null;
+  renderControls();
+});
+$('decision-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const draft = stateFor(selected)?.draft;
+  if (draft) void submitDecision(draft.action, draft.note);
+});
+
+$('approve').addEventListener('click', async () => {
+  const id = selected;
+  const state = stateFor(id);
+  if (resetting || busy(state) || state?.run?.proposal.status !== 'awaiting_approval') return;
+  state.approving = true;
+  state.error = '';
+  renderControls();
+  try {
+    const result = await api('approve', {runId: state.run.id});
+    state.message = `Created CRM record ${result.id}.`;
+    state.run = await api('runs/' + state.run.id);
+    state.events = state.run.trace;
+    await loadPipeline();
+  } catch (error) {
+    state.error = error.message;
+  } finally {
+    state.approving = false;
+    void loadMeasurement();
+    renderPortfolio();
+    renderControls();
+    if (selected === id) {
+      renderRecommendation();
+      renderTrace();
+    }
+  }
+});
+
+$('reset').addEventListener('click', async () => {
+  if (resetting || [...states.values()].some(busy)) return;
+  resetting = true;
+  renderControls();
+  let feedback = 'Workspace reset.';
+  let failed = false;
+  try {
+    await api('reset', {});
+    states.clear();
+    $('eval-cases').innerHTML = '<p class="muted">Run an account analysis to see its evaluation here.</p>';
+    renderPortfolio();
+    renderAccount();
+    await Promise.all([loadPipeline(), loadMeasurement()]);
+  } catch (error) {
+    feedback = error.message;
+    failed = true;
+  } finally {
+    resetting = false;
+    renderControls();
+    $('message').textContent = feedback;
+    $('message').classList.toggle('error', failed);
+  }
+});
+
+try {
+  accounts = await api('accounts');
+  selected = accounts[0]?.id;
+  $('account-count').textContent = accounts.length;
+  renderPortfolio();
+  renderAccount();
+  await Promise.all([loadPipeline(), loadMeasurement()]);
+} catch (error) {
+  $('message').textContent = error.message;
+}
+</script>
+</body>
+</html>
