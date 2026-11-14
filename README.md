@@ -21,3 +21,33 @@ npm start
 ```
 
 Open [the dashboard](http://127.0.0.1:3000/). Run `npm test` after building to check the workflow and guardrails.
+
+## Screenshots
+
+<details open>
+<summary>Relationship manager dashboard</summary>
+
+![Account portfolio and a treasury management recommendation awaiting approval](docs/screenshots/relationship-manager-dashboard.png)
+
+</details>
+
+<details>
+<summary>CRM pipeline and revenue funnel</summary>
+
+![Approved CRM opportunity, revenue funnel, and business case](docs/screenshots/crm-pipeline.png)
+
+</details>
+
+<details>
+<summary>Automated checks</summary>
+
+![Run evidence, expected and actual outputs, and workflow check results](docs/screenshots/automated-checks.png)
+
+</details>
+
+<details>
+<summary>Recommendation quality</summary>
+
+![Workflow and scripted review pass rates, review coverage, and per-analysis findings](docs/screenshots/recommendation-quality.png)
+
+</details>
